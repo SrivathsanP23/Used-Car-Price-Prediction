@@ -1,58 +1,123 @@
 import pickle
 import numpy as np
-import pandas as pd
 import streamlit as st
+import pandas as pd
+import joblib
+from sklearn.preprocessing import LabelEncoder
 from streamlit_extras.stylable_container import stylable_container
 
+# Load car dataset
+car_df = pd.read_csv("cardata.csv")
+
+# Load the model and scaler
+model = joblib.load("E:/Guvi DS/Project3CarDekho_UsedcarPrediction/best_xgb_boost.pkl")
+scaler = joblib.load('E:/Guvi DS/Project3CarDekho_UsedcarPrediction/scaler.pkl')
+
+# Initialize LabelEncoders for categorical features
+categorical_columns = [
+    'bodytype', 'fueltype', 'transmission', 'DriveType', 'Insurance', 'oem', 'city'
+]
+label_encoders = {col: LabelEncoder().fit(car_df[col]) for col in categorical_columns}
+
+# Function to predict the resale price
+def predict_resale_price():
+    # Prepare numerical features
+    num_features = np.array([
+        int(m_seats),
+        int(m_km),
+        int(m_Registration_year),
+        int(m_ownerNo),
+        int(m_Engine),
+        int(m_modelYear),
+        int(m_Year_of_Manufacture),
+        int(m_gear),
+        float(m_mileage)
+    ]).reshape(1, -1)
+
+    # Scale the numerical features using the MinMaxScaler
+    scaled_num_features = scaler.transform(num_features)
+
+    # Prepare and encode categorical features
+    cat_features = np.array([
+        label_encoders['bodytype'].transform([m_bodytype])[0],
+        label_encoders['fueltype'].transform([m_fuel_type])[0],
+        label_encoders['transmission'].transform([m_transmission])[0],
+        label_encoders['DriveType'].transform([m_drivetype])[0],
+        label_encoders['Insurance'].transform([m_Insurance])[0],
+        label_encoders['oem'].transform([m_oem])[0],
+        label_encoders['city'].transform([m_city])[0]
+    ]).reshape(1, -1)
+
+    # Concatenate scaled numerical features and encoded categorical features
+    final_input = np.hstack((scaled_num_features, cat_features))
+
+    # Make prediction using the model
+    prediction = model.predict(final_input)
+
+    # Return formatted price prediction
+    return prediction[0]
+
+
 # Streamlit Page Configuration
-st.set_page_config(
-    page_title="Used Car Price Predictor",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
 
 # Title
-st.title(":red[Car Dheko Used Car Price Prediction]")
 
+st.set_page_config(layout="wide",page_icon=":material/directions_bus:",page_title="CarPrediction Project",initial_sidebar_state="expanded")
+st.title(":red[Car Dekho Used Car Price Prediction]")
+st.markdown(
+    f"""
+    <style>
+    .stApp {{
+        background-image: url("https://wallpaper.forfun.com/fetch/fb/fb7772b40cf1d5ab756c9cd9b626603b.jpeg?w=1200&r=0.5625");
+        background-size: cover; /* Ensures the image covers the entire container */
+        background-position: center; /* Centers the image */
+        background-repeat: no-repeat; /* Prevents the image from repeating */
+        background-attachment: fixed; /* Fixes the image in place when scrolling */
+        height: 100vh; /* Sets the height to 100% of the viewport height */
+        width: 100vw; /* Sets the width to 100% of the viewport width */
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
+st.markdown(
+    f"""
+    <style>
+    [data-testid="stSidebar"] {{
+        background-color: #60191900; /* Replace with your desired color */
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }}
+    </style>
+    
+    """,
+    unsafe_allow_html=True
+)
 
-# Options for user input
-Gear = ['4',  '5',  '6',  '7',  '8',  '9', '10']
-City_dict = {'Delhi': 2, 'Kolkata': 5, 'Chennai': 1, 'Hyderabad': 3, 'Jaipur': 4, 'Bengaluru': 0}
-bt_dict = {'Hatchback': 0, 'SUV': 7, 'Sedan': 8, 'MUV': 4, 'Coupe': 1, 'Minivans': 5,
-           'Pickup Trucks': 6, 'Convertibles': 0, 'Hybrids': 3, 'Wagon': 9}
-fuel_type_dict = {'Petrol': 4, 'Diesel': 1, 'LPG': 0, 'CNG': 2, 'Electric': 3}
-ownerNo = ['0', '1', '2', '3', '4', '5']
-Inusrance_validity_dict = {'Third Party insurance': 5, 'Comprehensive': 2, 'Third Party': 4,
-                           'Zero Dep': 6, 'Not Available': 3}
-Year_of_Manufacture_dict = {'2018': 16, '2017': 15, '2016': 14, '2019': 17,
-                            '2021': 19, '2020': 18, '2015': 13, '2014': 12,
-                            '2022': 20, '2013': 11, '2012': 10, '2011': 9, '2010': 8,
-                            '2009': 7, '2023': 21, '2008': 6, '2007': 5, '2006': 4, '2004': 3,
-                            '2005': 2, '2003': 1, '2002': 0}
-
-modelYear_dict = {'2018': 23, '2017': 22, '2016': 21, '2019': 24, '2021': 26, '2020': 25,
-                  '2015': 20, '2014': 19, '2022': 27, '2023': 28, '2013': 18, '2012': 17,
-                  '2011': 16, '2010': 15, '2009': 14, '2008': 13, '2007': 12, '2006': 11,
-                  '2004': 9, '2005': 10, '2003': 8, '2002': 7, '2001': 6, '1998': 3,
-                  '1995': 1, '1985': 0, '1999': 4, '2000': 5, '1997': 2}
-
-transmission_dict = {'Automatic': 0, 'Manual': 1}
 
 # Sidebar for user inputs
 with st.sidebar:
-    st.header("Car Details :Cardheko:")
-    m_transmission = st.selectbox(label="Transmission", options=list(transmission_dict.keys()), index=0)
-    m_Year_of_Manufacture = st.selectbox(label="Year of Manufacture", options=list(Year_of_Manufacture_dict.keys()), index=0)
-    m_modelYear = st.selectbox(label="Model Year", options=list(modelYear_dict.keys()), index=0)
-    m_gear = st.selectbox(label="Number of gears", options=Gear, index=0)
-    m_city = st.selectbox(label='City Name', options=list(City_dict.keys()), index=0)
-    m_Inusrance_validity = st.selectbox(label="Insurance Validity", options=list(Inusrance_validity_dict.keys()), index=0)
-    m_ownerNo = st.selectbox(label="Number of Owners", options=ownerNo, index=0)
-    m_fuel_type = st.selectbox(label="Fuel Type", options=list(fuel_type_dict.keys()), index=0)
-    m_km = st.number_input(label="Kilometers Driven", step=1000, value=0)
-    m_bt = st.selectbox(label="Body Type", options=list(bt_dict.keys()), index=0)
-    m_mileage = st.number_input(label="Mileage", step=5)
+    st.title(":red[Features]")
+    m_transmission = st.selectbox(label="Transmission", options=car_df['transmission'].unique())
+    m_oem = st.selectbox(label="Car Brand", options=car_df['oem'].unique())
+    m_km = st.selectbox(label="Select KMs Driven", options=sorted(car_df['kms driven'].unique().astype(int)))
+    m_gear = st.selectbox(label="Number of Gears", options=sorted(car_df['Gearbox'].unique().astype(int)))
+    m_fuel_type = st.selectbox(label="Fuel Type", options=car_df['fueltype'].unique())
+    m_bodytype = st.selectbox(label="Body Type", options=car_df['bodytype'].unique())
+    m_mileage = st.selectbox(label="Mileage", options=sorted(car_df['Mileage'].unique().astype(float)))
+    m_drivetype = st.selectbox(label="Drive Type", options=car_df['DriveType'].unique())
+    m_Registration_year = st.selectbox(label="Registered Year", options=sorted(car_df['Registration Year'].unique().astype(int)))
+    m_modelYear = st.selectbox(label="Model Year", options=sorted(car_df['modelYear'].unique().astype(int)))
+    m_Year_of_Manufacture = st.selectbox(label="Year of Manufacture", options=sorted(car_df['Year of Manufacture'].unique()))
+    
+    m_seats = st.selectbox(label="Number of Seats", options=sorted(car_df['seats'].unique().astype(int)))
+    m_ownerNo = st.selectbox(label="Number of Owners", options=sorted(car_df['owner'].unique().astype(int)))
+    m_Engine = st.selectbox(label="Engine Displacement", options=sorted(car_df['Engine Displacement'].unique().astype(int)))
+    
+    m_Insurance = st.selectbox(label="Insurance", options=car_df['Insurance'].unique())
+    m_city = st.selectbox(label="City", options=car_df['city'].unique())
 
     with stylable_container(
         key="red_button",
@@ -63,33 +128,10 @@ with st.sidebar:
                 border-radius: 20px;
                 background-image: linear-gradient(90deg, #0575e6 0%, #021b79 100%);
             }
-            """,
-    ):  
+        """
+    ):
         pred_price_button = st.button("Estimate Used Car Price")
-
-# Function to predict the resale price
-def predict_resale_price():
-    # Load pre-trained model
-    model = pickle.load(open("E:/Guvi DS/Project3CarDekho_UsedcarPrediction/randomforest.pkl", "rb"))
-
-    # Combine user inputs to an array
-    user_data = np.array([[
-        int(m_gear),
-        int(m_km),
-        int(m_mileage),
-        int(City_dict.get(m_city)),
-        int(Inusrance_validity_dict.get(m_Inusrance_validity)),
-        int(m_ownerNo),
-        int(fuel_type_dict.get(m_fuel_type)),
-        int(bt_dict.get(m_bt)),
-        int(Year_of_Manufacture_dict.get(m_Year_of_Manufacture)),
-        int(modelYear_dict.get(m_modelYear)),
-        int(transmission_dict.get(m_transmission))
-    ]])
-
-    prediction = model.predict(user_data)
-
-    return f'The estimated used car price is: ₹ {prediction[0]:,.2f} Lakhs'
-
+        
 if pred_price_button:
-    st.write(predict_resale_price())
+    prediction_value = predict_resale_price()
+    st.title(f":green[The estimated used car price is: ₹ {prediction_value / 100000:,.2f} Lakhs]")
