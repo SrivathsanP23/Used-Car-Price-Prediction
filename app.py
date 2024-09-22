@@ -11,7 +11,7 @@ car_df = pd.read_csv("cardata.csv")
 
 # Load the model and scaler
 model = joblib.load("best_xgb_boost.pkl")
-scaler = joblib.load('Scaler.pkl')
+scaler = joblib.load('scaler.pkl')
 
 # Initialize LabelEncoders for categorical features
 categorical_columns = [
