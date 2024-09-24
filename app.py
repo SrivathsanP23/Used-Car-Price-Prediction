@@ -99,7 +99,7 @@ st.markdown(
 
 # Sidebar for user inputs
 with st.sidebar:
-    st.title(":red[Features]")
+    st.title("Features")
     m_transmission = st.selectbox(label="Transmission", options=car_df['transmission'].unique())
     m_oem = st.selectbox(label="Car Brand", options=car_df['oem'].unique())
     m_km = st.selectbox(label="Select KMs Driven", options=sorted(car_df['kms driven'].unique().astype(int)))
