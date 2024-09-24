@@ -10,8 +10,8 @@ from streamlit_extras.stylable_container import stylable_container
 car_df = pd.read_csv("cardata.csv")
 
 # Load the model and scaler
-model = joblib.load("best_xgb_model.pkl")
-scaler = joblib.load('scaler.pkl')
+model = joblib.load("E:/Guvi DS/Project3CarDekho_UsedcarPrediction/best_xgb_model.pkl")
+scaler = joblib.load('E:/Guvi DS/Project3CarDekho_UsedcarPrediction/scaler.pkl')
 
 # Initialize LabelEncoders for categorical features
 categorical_columns = [
