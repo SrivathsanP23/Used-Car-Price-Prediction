@@ -127,7 +127,7 @@ with st.sidebar:
                 color: white;
                 border-radius: 30px;
                 background: rgb(2,243,228);
-                background: linear-gradient(347deg, rgba(2,243,228,1) 24%, rgba(85,112,170,1) 52%);
+                background: linear-gradient(105deg, rgba(2,243,228,1) 24%, rgba(85,112,170,1) 52%);
             }
         """
     ):
