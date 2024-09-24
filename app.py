@@ -134,4 +134,4 @@ with st.sidebar:
         
 if pred_price_button:
     prediction_value = predict_resale_price()
-    st.code(f":green[The estimated used car price is: ₹ {prediction_value / 100000:,.2f} Lakhs]")
+    st.code(f"The estimated used car price is: ₹ {prediction_value / 100000:,.2f} Lakhs")
