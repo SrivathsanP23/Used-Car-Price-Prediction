@@ -123,11 +123,11 @@ with st.sidebar:
         key="red_button",
         css_styles="""
             button {
-                background-color: green;
-                color: white;
+                background-color: ;
+                color: black;
                 border-radius: 30px;
                 background: rgb(2,243,228);
-                background: linear-gradient(105deg, rgba(2,243,228,1) 24%, rgba(85,112,170,1) 52%);
+                background: linear-gradient(234deg, rgba(2,243,228,1) 24%, rgba(85,112,170,1) 52%);
             }
         """
     ):
