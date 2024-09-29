@@ -10,14 +10,15 @@ from streamlit_extras.stylable_container import stylable_container
 car_df = pd.read_csv("cardata.csv")
 
 # Load the model and scaler
-model = joblib.load("best_xgb_model.pkl")
-scaler = joblib.load('scaler.pkl')
+model = joblib.load("E:/Guvi DS/Project3CarDekho_UsedcarPrediction/best_xgb_model.pkl")
+scaler = joblib.load('E:/Guvi DS/Project3CarDekho_UsedcarPrediction/scaler.pkl')
 
 # Initialize LabelEncoders for categorical features
 categorical_columns = [
     'bodytype', 'fueltype', 'transmission', 'DriveType', 'Insurance', 'oem', 'city'
 ]
-label_encoders = {col: LabelEncoder().fit(car_df[col]) for col in categorical_columns}
+#label_encoders = {col: LabelEncoder().fit(car_df[col]) for col in categorical_columns}
+label_encoder_bodytype = LabelEncoder().fit(car_df['bodytype'])
 
 # Function to predict the resale price
 def predict_resale_price():
@@ -25,31 +26,38 @@ def predict_resale_price():
     num_features = np.array([
         int(m_seats),
         int(m_km),
-        int(m_Registration_year),
         int(m_ownerNo),
         int(m_Engine),
         int(m_modelYear),
-        int(m_Year_of_Manufacture),
         int(m_gear),
         float(m_mileage)
     ]).reshape(1, -1)
 
     # Scale the numerical features using the MinMaxScaler
     scaled_num_features = scaler.transform(num_features)
-
+    bodytype_encoded = label_encoder_bodytype.transform([m_bodytype]).reshape(1, -1)  # Reshape to (1, 1)
+    
     # Prepare and encode categorical features
     cat_features = np.array([
-        label_encoders['bodytype'].transform([m_bodytype])[0],
-        label_encoders['fueltype'].transform([m_fuel_type])[0],
-        label_encoders['transmission'].transform([m_transmission])[0],
-        label_encoders['DriveType'].transform([m_drivetype])[0],
-        label_encoders['Insurance'].transform([m_Insurance])[0],
-        label_encoders['oem'].transform([m_oem])[0],
-        label_encoders['city'].transform([m_city])[0]
+        m_fuel_type,
+        m_transmission,
+        m_drivetype,
+        m_Insurance,
+        m_oem,
+        m_city
     ]).reshape(1, -1)
 
-    # Concatenate scaled numerical features and encoded categorical features
-    final_input = np.hstack((scaled_num_features, cat_features))
+     # Create a DataFrame for one-hot encoding
+    cat_features_df = pd.DataFrame(cat_features, columns=['fueltype', 'transmission', 'DriveType', 'Insurance', 'oem', 'city'])
+
+    # One-hot encode all categorical features
+    cat_features_encoded = pd.get_dummies(cat_features_df, drop_first=True)
+
+    # Ensure the encoded features have the same columns as the model expects
+    cat_features_encoded = cat_features_encoded.reindex(columns=model.feature_names_in_, fill_value=0)
+
+    # Combine scaled numerical features and one-hot encoded categorical features
+    final_input = np.hstack((scaled_num_features, bodytype_encoded,cat_features_encoded.values))
 
     # Make prediction using the model
     prediction = model.predict(final_input)
@@ -64,6 +72,7 @@ def predict_resale_price():
 
 st.set_page_config(layout="wide",page_icon=":material/directions_bus:",page_title="CarPrediction Project",initial_sidebar_state="expanded")
 st.title(":red[Car Dekho Used Car Price Prediction]")
+
 st.markdown(
     f"""
     <style>
@@ -99,22 +108,21 @@ st.markdown(
 
 # Sidebar for user inputs
 with st.sidebar:
-    st.title("Features")
+    st.title(":red[Features]")
     m_transmission = st.selectbox(label="Transmission", options=car_df['transmission'].unique())
     m_oem = st.selectbox(label="Car Brand", options=car_df['oem'].unique())
-    m_km = st.selectbox(label="Select KMs Driven", options=sorted(car_df['kms driven'].unique().astype(int)))
+    m_km = st.selectbox(label="Select KMs Driven", options=sorted(car_df['kms'].unique().astype(int)))
     m_gear = st.selectbox(label="Number of Gears", options=sorted(car_df['Gearbox'].unique().astype(int)))
     m_fuel_type = st.selectbox(label="Fuel Type", options=car_df['fueltype'].unique())
     m_bodytype = st.selectbox(label="Body Type", options=car_df['bodytype'].unique())
     m_mileage = st.selectbox(label="Mileage", options=sorted(car_df['Mileage'].unique().astype(float)))
     m_drivetype = st.selectbox(label="Drive Type", options=car_df['DriveType'].unique())
-    m_Registration_year = st.selectbox(label="Registered Year", options=sorted(car_df['Registration Year'].unique().astype(int)))
+
     m_modelYear = st.selectbox(label="Model Year", options=sorted(car_df['modelYear'].unique().astype(int)))
-    m_Year_of_Manufacture = st.selectbox(label="Year of Manufacture", options=sorted(car_df['Year of Manufacture'].unique()))
     
     m_seats = st.selectbox(label="Number of Seats", options=sorted(car_df['seats'].unique().astype(int)))
-    m_ownerNo = st.selectbox(label="Number of Owners", options=sorted(car_df['owner'].unique().astype(int)))
-    m_Engine = st.selectbox(label="Engine Displacement", options=sorted(car_df['Engine Displacement'].unique().astype(int)))
+    m_ownerNo = st.selectbox(label="Number of Owners", options=sorted(car_df['ownerNo'].unique().astype(int)))
+    m_Engine = st.selectbox(label="Engine Displacement", options=sorted(car_df['engine_cc'].unique().astype(int)))
     
     m_Insurance = st.selectbox(label="Insurance", options=car_df['Insurance'].unique())
     m_city = st.selectbox(label="City", options=car_df['city'].unique())
@@ -123,11 +131,10 @@ with st.sidebar:
         key="red_button",
         css_styles="""
             button {
-                background-color: ;
-                color: black;
-                border-radius: 30px;
-                background: rgb(2,243,228);
-                background: linear-gradient(234deg, rgba(2,243,228,1) 24%, rgba(85,112,170,1) 52%);
+                background-color: green;
+                color: white;
+                border-radius: 20px;
+                background-image: linear-gradient(90deg, #0575e6 0%, #021b79 100%);
             }
         """
     ):
@@ -135,4 +142,4 @@ with st.sidebar:
         
 if pred_price_button:
     prediction_value = predict_resale_price()
-    st.code(f"The estimated used car price is: ₹ {prediction_value / 100000:,.2f} Lakhs")
+    st.title(f":green[The estimated used car price is: ₹ {prediction_value / 100000:,.2f} Lakhs]")
