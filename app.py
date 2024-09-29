@@ -18,17 +18,20 @@ categorical_columns = [
     'bodytype', 'fueltype', 'transmission', 'DriveType', 'Insurance', 'oem', 'city'
 ]
 #label_encoders = {col: LabelEncoder().fit(car_df[col]) for col in categorical_columns}
-label_encoder_bodytype = LabelEncoder().fit(car_df['bodytype'])
+label_encoder_bodytype = joblib.load("labelencoded.pkl")
+onehotencoder = joblib.load("onehotencoded.pkl")
 
 # Function to predict the resale price
-def predict_resale_price():
+def predict_resale_price(m_bodytype, m_seats, m_km, m_modelYear, m_ownerNo, 
+                         m_Engine, m_gear, m_mileage,m_fuel_type,
+                         m_transmission, m_Insurance, m_oem, m_drivetype, m_city):
     # Prepare numerical features
     num_features = np.array([
         int(m_seats),
         int(m_km),
+        int(m_modelYear),
         int(m_ownerNo),
         int(m_Engine),
-        int(m_modelYear),
         int(m_gear),
         float(m_mileage)
     ]).reshape(1, -1)
@@ -41,27 +44,30 @@ def predict_resale_price():
     cat_features = np.array([
         m_fuel_type,
         m_transmission,
-        m_drivetype,
         m_Insurance,
         m_oem,
+        m_drivetype,
         m_city
     ]).reshape(1, -1)
 
-     # Create a DataFrame for one-hot encoding
-    cat_features_df = pd.DataFrame(cat_features, columns=['fueltype', 'transmission', 'DriveType', 'Insurance', 'oem', 'city'])
-
-    # One-hot encode all categorical features
-    cat_features_encoded = pd.get_dummies(cat_features_df, drop_first=True)
-
-    # Ensure the encoded features have the same columns as the model expects
-    cat_features_encoded = cat_features_encoded.reindex(columns=model.feature_names_in_, fill_value=0)
+    cat_features_encoded = onehotencoder.transform(cat_features)
+    
+    # Check if the number of features matches the expected shape
+    print(f"Scaled Numerical Features Shape: {scaled_num_features.shape}")
+    print(f"One-hot Encoded Features Shape: {cat_features_encoded.shape}")
+    print(f"Bodytype Encoded Shape: {bodytype_encoded.shape}")
 
     # Combine scaled numerical features and one-hot encoded categorical features
-    final_input = np.hstack((scaled_num_features, bodytype_encoded,cat_features_encoded.values))
+    final_input = np.hstack((scaled_num_features, bodytype_encoded, cat_features_encoded))
 
-    # Make prediction using the model
-    prediction = model.predict(final_input)
+    # Check the final input shape
+    print(f"Final Input Shape: {final_input.shape}")
 
+    # Make sure the shape matches what the model expects
+    if final_input.shape[1] != len(model.feature_names_in_):
+        raise ValueError(f"Feature shape mismatch, expected: {len(model.feature_names_in_)}, got {final_input.shape[1]}")
+
+    prediction = model.predict(final_input)    
     # Return formatted price prediction
     return prediction[0]
 
@@ -72,6 +78,7 @@ def predict_resale_price():
 
 st.set_page_config(layout="wide",page_icon=":material/directions_bus:",page_title="CarPrediction Project",initial_sidebar_state="expanded")
 st.title(":red[Car Dekho Used Car Price Prediction]")
+
 
 st.markdown(
     f"""
@@ -141,5 +148,7 @@ with st.sidebar:
         pred_price_button = st.button("Estimate Used Car Price")
         
 if pred_price_button:
-    prediction_value = predict_resale_price()
+    prediction_value = predict_resale_price(m_bodytype, m_seats, m_km, m_modelYear, m_ownerNo, m_Engine, 
+                                            m_gear, m_mileage, m_fuel_type, m_transmission, m_Insurance, 
+                                            m_oem, m_drivetype, m_city)
     st.title(f":green[The estimated used car price is: ₹ {prediction_value / 100000:,.2f} Lakhs]")
