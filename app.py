@@ -158,6 +158,13 @@ if pred_price_button:
                                             m_oem, m_drivetype, m_city)
     st.subheader(f"The estimated used car price is :blue[₹ {prediction_value / 100000:,.2f} Lakhs]")
 
+st.title('Car Price Distribution by Body Type')
+
+# Bar plot using plotly express
+fig = px.bar(car_df, x='bodytype', y='price', title='Car Price by Body Type', color='bodytype')
+st.plotly_chart(fig)
+
+
 # Scatter plot using plotly
 st.title("Kms vs Price Scatter Plot")
 fig = px.scatter(car_df, x='kms', y='price', color='fueltype')
@@ -165,11 +172,19 @@ st.plotly_chart(fig)  # Display in Streamlit
 
 st.title('Mileage Distribution')
 
-# Histogram using matplotlib
-plt.figure(figsize=(8, 6))
-plt.hist(car_df['Mileage'], bins=30, color='blue', edgecolor='black')
-plt.xlabel('Mileage')
-plt.ylabel('Frequency')
-st.pyplot(plt)  # Display in Streamlit
 
+
+# Histogram using plotly express
+fig = px.histogram(car_df, x='Mileage', nbins=30, title='Distribution of Car Mileage')
+st.plotly_chart(fig)
+
+
+st.title('Correlation Heatmap')
+
+# Compute correlation matrix
+corr_matrix = car_df[['kms', 'price', 'Mileage', 'engine_cc']].corr()
+
+# Heatmap using plotly express
+fig = px.imshow(corr_matrix, text_auto=True, title='Correlation Heatmap')
+st.plotly_chart(fig)
 
