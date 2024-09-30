@@ -40,8 +40,7 @@ def predict_resale_price(m_bodytype, m_seats, m_km, m_modelYear, m_ownerNo,
     ]).reshape(1, -1)
 
     # Scale the numerical features using the MinMaxScaler
-    scaled_num_features = scaler.transform(num_features)
-    bodytype_encoded = label_encoder_bodytype.transform([m_bodytype]).reshape(1, -1)  # Reshape to (1, 1)
+      # Reshape to (1, 1)
     
     # Prepare and encode categorical features
     cat_features = np.array([
@@ -52,7 +51,8 @@ def predict_resale_price(m_bodytype, m_seats, m_km, m_modelYear, m_ownerNo,
         m_drivetype,
         m_city
     ]).reshape(1, -1)
-
+    scaled_num_features = scaler.transform(num_features)
+    bodytype_encoded = label_encoder_bodytype.transform([m_bodytype]).reshape(1, -1)
     cat_features_encoded = onehotencoder.transform(cat_features)
     
     # Check if the number of features matches the expected shape
@@ -182,7 +182,7 @@ st.plotly_chart(fig)
 st.title('Correlation Heatmap')
 
 # Compute correlation matrix
-corr_matrix = car_df[['kms', 'price', 'Mileage', 'engine_cc']].corr()
+corr_matrix = car_df[['kms','engine_cc','price','seats','ownerNo']].corr()
 
 # Heatmap using plotly express
 fig = px.imshow(corr_matrix, text_auto=True, title='Correlation Heatmap')
