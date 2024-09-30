@@ -1,10 +1,13 @@
 import pickle
+from matplotlib import pyplot as plt
 import numpy as np
+import seaborn
 import streamlit as st
 import pandas as pd
 import joblib
 from sklearn.preprocessing import LabelEncoder
 from streamlit_extras.stylable_container import stylable_container
+import plotly.express as px
 
 # Load car dataset
 car_df = pd.read_csv("cardata.csv")
@@ -80,6 +83,7 @@ st.set_page_config(layout="wide",page_icon=":material/directions_bus:",page_titl
 st.title(":red[Car Dekho Used Car Price Prediction]")
 
 
+
 st.markdown(
     f"""
     <style>
@@ -111,6 +115,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 # Sidebar for user inputs
@@ -151,4 +156,20 @@ if pred_price_button:
     prediction_value = predict_resale_price(m_bodytype, m_seats, m_km, m_modelYear, m_ownerNo, m_Engine, 
                                             m_gear, m_mileage, m_fuel_type, m_transmission, m_Insurance, 
                                             m_oem, m_drivetype, m_city)
-    st.title(f":green[The estimated used car price is: ₹ {prediction_value / 100000:,.2f} Lakhs]")
+    st.subheader(f"The estimated used car price is :blue[₹ {prediction_value / 100000:,.2f} Lakhs]")
+
+# Scatter plot using plotly
+st.title("Kms vs Price Scatter Plot")
+fig = px.scatter(car_df, x='kms', y='price', color='fueltype')
+st.plotly_chart(fig)  # Display in Streamlit
+
+st.title('Mileage Distribution')
+
+# Histogram using matplotlib
+plt.figure(figsize=(8, 6))
+plt.hist(car_df['Mileage'], bins=30, color='blue', edgecolor='black')
+plt.xlabel('Mileage')
+plt.ylabel('Frequency')
+st.pyplot(plt)  # Display in Streamlit
+
+
